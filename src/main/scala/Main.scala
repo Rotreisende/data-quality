@@ -1,41 +1,41 @@
-import com.github.tototoshi.csv.CSVReader
+import com.github.tototoshi.csv.{CSVReader, CSVWriter}
 
-import java.io.File
 import scala.annotation.tailrec
-import scala.collection.mutable
-import scala.io.Source
+import Headers._
 
 object Main extends App {
-  type Row = mutable.Map[String, String]
-
-  var dataSets = materialize(read("src/main/resources/data.csv"))
-
-  val rows = dataSets.map {
-    case _@Seq(surname, name, part) =>
-      val row = mutable.Map[String, String]()
-      row("surname") = surname
-      row("name") = name
-      row("part") = part
-      row
-
-    case _ => None
-  }
+  val data = safelyUsage(CSVReader.open("src/main/resources/data.csv"))(x => materialize(x.iterator))
+  var rows = data.map(createRow)
 
   println(rows)
 
-  def read(root: String) = {
-    val reader = CSVReader.open(new File(root))
-    val iterator = reader.iterator
-    iterator
+  def createRow(fields: Seq[String]) = getHeadersRow().zip(fields).toMap
+
+  def safelyUsage[A <: AutoCloseable, B](resource: A)(usage: A => B): B = {
+    try {
+      usage(resource)
+    } finally {
+      resource.close()
+    }
+  }
+
+  def isValidFieldCount(list: Seq[String], countFields: Int): Boolean = {
+    list.size == countFields
   }
 
   def materialize(iterator: Iterator[Seq[String]]): List[Seq[String]] = {
     @tailrec
     def loop(iterator: Iterator[Seq[String]], accumulator: List[Seq[String]]): List[Seq[String]] = {
-      if (iterator.hasNext) {
-        loop(iterator, iterator.next() :: accumulator)
-      } else {
-        accumulator
+      iterator.nextOption() match {
+        case Some(value) =>
+          if (isValidFieldCount(value, getHeadersRow().size)){
+            loop(iterator, value :: accumulator)
+          } else {
+            safelyUsage(CSVWriter.open("src/main/resources/IncorrectSubjects.csv", append = true))(x => x.writeRow(value))
+            loop(iterator, accumulator)
+          }
+
+        case None => accumulator
       }
     }
     loop(iterator, List.empty).reverse
