@@ -1,7 +1,3 @@
-object Headers {
-  private lazy val headers = Vector("surname", "name", "patronymic")
-
-  def getHeadersRow(): Seq[String] = {
-    headers
-  }
+package object Headers {
+  lazy val headers = Vector("surname", "name", "patronymic")
 }

@@ -1,5 +1,3 @@
-package types
-
-object Data {
+package object DataType {
   type Row = Map[String, String]
 }

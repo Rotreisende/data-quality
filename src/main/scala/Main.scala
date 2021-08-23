@@ -4,12 +4,11 @@ import scala.annotation.tailrec
 import Headers._
 
 object Main extends App {
-  val data = safelyUsage(CSVReader.open("src/main/resources/data.csv"))(x => materialize(x.iterator))
-  var rows = data.map(createRow)
+  val rows = safelyUsage(CSVReader.open("src/main/resources/data.csv"))(x => materialize(x.iterator, write))
 
   println(rows)
 
-  def createRow(fields: Seq[String]) = getHeadersRow().zip(fields).toMap
+
 
   def safelyUsage[A <: AutoCloseable, B](resource: A)(usage: A => B): B = {
     try {
@@ -19,25 +18,29 @@ object Main extends App {
     }
   }
 
-  def isValidFieldCount(list: Seq[String], countFields: Int): Boolean = {
-    list.size == countFields
+  def isValidFieldCount(list: Seq[String]): Boolean = {
+    list.size == headers.size
   }
 
-  def materialize(iterator: Iterator[Seq[String]]): List[Seq[String]] = {
+  def write(value: Seq[String]): Unit = {
+    safelyUsage(CSVWriter.open("src/main/resources/IncorrectSubjects.csv", append = true))(x => x.writeRow(value))
+  }
+
+  def materialize(iterator: Iterator[Seq[String]], f: Seq[String] => Unit): List[Map[String, String]] = {
     @tailrec
-    def loop(iterator: Iterator[Seq[String]], accumulator: List[Seq[String]]): List[Seq[String]] = {
+    def loop(iterator: Iterator[Seq[String]], accumulator: List[Map[String, String]]): List[Map[String, String]] = {
       iterator.nextOption() match {
         case Some(value) =>
-          if (isValidFieldCount(value, getHeadersRow().size)){
-            loop(iterator, value :: accumulator)
+          if (isValidFieldCount(value)){
+            loop(iterator, Instrument.createRow(value) :: accumulator)
           } else {
-            safelyUsage(CSVWriter.open("src/main/resources/IncorrectSubjects.csv", append = true))(x => x.writeRow(value))
+            f(value)
             loop(iterator, accumulator)
           }
 
         case None => accumulator
       }
     }
-    loop(iterator, List.empty).reverse
+    loop(iterator, List.empty)
   }
 }
