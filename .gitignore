@@ -7,7 +7,8 @@
 .idea
 *.iml
 /project/target
-/project/project/target
 
 .metals
 .bloop
+/project/project/target/
+/project/target/
