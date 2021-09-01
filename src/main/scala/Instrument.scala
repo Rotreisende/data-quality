@@ -1,5 +1,6 @@
 import Headers.headers
 
 package object Instrument {
-  def createRow(fields: Seq[String]) = headers.zip(fields).toMap
+  val validLength = 40
+  def createRow(fields: Seq[String]): Map[String, String] = headers.zip(fields).toMap
 }

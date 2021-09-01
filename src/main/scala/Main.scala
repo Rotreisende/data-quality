@@ -2,13 +2,17 @@ import com.github.tototoshi.csv.{CSVReader, CSVWriter}
 
 import scala.annotation.tailrec
 import Headers._
+import Rules._
 
 object Main extends App {
-  val rows = safelyUsage(CSVReader.open("src/main/resources/data.csv"))(x => materialize(x.iterator, write))
-
+  val rows = safelyUsage(CSVReader.open(Config.roots("data")))(x => materialize(x.iterator, write))
   println(rows)
 
-
+  rows.foreach { row =>
+    println(headers.forall {
+      field => DataQuality.forAll(Some(row(field)), mapRule(field))
+    })
+  }
 
   def safelyUsage[A <: AutoCloseable, B](resource: A)(usage: A => B): B = {
     try {
@@ -23,7 +27,7 @@ object Main extends App {
   }
 
   def write(value: Seq[String]): Unit = {
-    safelyUsage(CSVWriter.open("src/main/resources/IncorrectSubjects.csv", append = true))(x => x.writeRow(value))
+    safelyUsage(CSVWriter.open(Config.roots("incorrect"), append = true))(_.writeRow(value))
   }
 
   def materialize(iterator: Iterator[Seq[String]], f: Seq[String] => Unit): List[Map[String, String]] = {
@@ -34,7 +38,7 @@ object Main extends App {
           if (isValidFieldCount(value)){
             loop(iterator, Instrument.createRow(value) :: accumulator)
           } else {
-            f(value)
+            //f(value)
             loop(iterator, accumulator)
           }
 

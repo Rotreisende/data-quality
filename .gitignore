@@ -1,4 +1,13 @@
+/target
+
+.settings
+.project
+.classpath
 .bsp
 .idea
-/target
-project/target
+*.iml
+/project/target
+/project/project/target
+
+.metals
+.bloop
