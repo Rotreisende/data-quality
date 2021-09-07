@@ -6,7 +6,6 @@
 .bsp
 .idea
 *.iml
-/project/target
 
 .metals
 .bloop

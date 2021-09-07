@@ -1,13 +1,26 @@
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
+
+import scala.util.{Failure, Success, Try}
 
 object Config {
-  lazy val roots: Map[String, String] = apply()
+  lazy val roots: Roots = load(safelyReadConfig())
 
-  private def apply(): Map[String, String] = {
-    val factory = ConfigFactory.load()
-    val dataRoot = factory.getString("dataRoot")
-    val incorrectDataRoot = factory.getString("incorrectDataRoot")
-    val correctDataRoot = factory.getString("correctDataRoot")
-    Map("data" -> dataRoot, "incorrect" -> incorrectDataRoot, "correct" -> correctDataRoot)
+  private def apply(factory: Config): Roots = {
+    Roots(factory.getString("dataRoot"),
+      factory.getString("incorrectDataRoot"),
+      factory.getString("correctDataRoot"))
+  }
+
+  private def safelyReadConfig(): Try[Config] = {
+    Try {
+      ConfigFactory.load()
+    }
+  }
+
+  private def load(config: Try[Config]): Roots = {
+    config match {
+      case Success(value) => apply(value)
+      case Failure(exception) => throw exception
+    }
   }
 }

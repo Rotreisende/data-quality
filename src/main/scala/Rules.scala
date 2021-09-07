@@ -1,42 +1,51 @@
+import DataType._
+import Validators.NameValidator.OptionValidator
+import Validators._
+
 object Rules {
-  lazy val mapRule = Map(
-    "surname" -> nameRules,
-    "name" -> nameRules,
-    "patronymic" -> optionNameRules
+  def functor[F[_] : Functor](value: F[String])(func: String => String): F[String] = {
+    Functor[F].map(value)(func)
+  }
+
+  val nameRules: List[DataQuality[Id]] = List[DataQuality[Id]](
+    DataQuality(SizeValidator[Id].validate(Instrument.nameLength, equals = false), ""),
+    DataQuality(NameValidator[Id].validate, "")
   )
 
-  val nameRules = List(
-    DataQuality(sizeRule, "Illegal length value"),
-    DataQuality(onlyCharRule, "Exist not only char"))
+  val nameOpsRules = List(
+    DataQuality(SizeValidator[Option].validate(Instrument.nameLength, equals = false), ""),
+    DataQuality(NameValidator[Option].validate, "")
+  )
 
-  val optionNameRules = List(DataQuality(optionNameRule, "Illegal option name"))
+  val dateRules: List[DataQuality[Id]] = List[DataQuality[Id]](DataQuality(DateValidator[Id].validate, ""))
 
-  private val functor = new Functor[Option] {
-    override def map[A, B](f: A => B, v: Option[A]): Option[B] = v match {
-      case Some(x) => Some(f(x))
-      case None => None
-    }
-  }
+  val idTypeRules: List[DataQuality[Id]] = List[DataQuality[Id]](
+    DataQuality(SizeValidator[Id].validate(Instrument.idTypeLength, equals = true), ""),
+    DataQuality(IntValidator[Id].validate, "")
+  )
 
-  def optionNameRule(value: Option[String]): Boolean = {
-    value match {
-      case Some("") => true
-      case Some(_) => DataQuality.forAll(value, nameRules)
-      case None => false
-    }
-  }
+  val idNumberRules: List[DataQuality[Id]] = List[DataQuality[Id]](
+    DataQuality(SizeValidator[Id].validate(Instrument.idNumberLength, equals = true), "primary id number incorrect size"),
+    DataQuality(IntValidator[Id].validate, "primary id number incorrect format")
+  )
 
-  def sizeRule(value: Option[String]): Boolean = {
-    value match {
-      case Some(value) => value.length < Instrument.validLength
-      case None => false
-    }
-  }
+  val idAuthorityRules: List[DataQuality[Id]] = List[DataQuality[Id]](
+    DataQuality(SizeValidator[Id].validate(Instrument.idAuthorityLength, equals = false), "primary id authority incorrect size")
+  )
 
-  def onlyCharRule(value: Option[String]): Boolean = {
-    value match {
-      case Some(value) => Checker.onlyChars(value)
-      case None => false
-    }
-  }
+  val idTypeOpRules = List(
+    DataQuality(SizeValidator[Option].validate(Instrument.idTypeLength, equals = true), ""),
+    DataQuality(IntValidator[Option].validate, "")
+  )
+
+  val idNumberOpRules = List(
+    DataQuality(SizeValidator[Option].validate(Instrument.idNumberLength, equals = true), "primary id number incorrect size"),
+    DataQuality(IntValidator[Option].validate, "primary id number incorrect format")
+  )
+
+  val dateOpRules = List(DataQuality(DateValidator[Option].validate, ""))
+
+  val idAuthorityOpRules = List(
+    DataQuality(SizeValidator[Option].validate(Instrument.idAuthorityLength, equals = false), "primary id authority incorrect size")
+  )
 }

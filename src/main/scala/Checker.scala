@@ -1,6 +1,6 @@
 import scala.util.matching.Regex
 
-object Checker {
+package object Checker {
   val charPattern: Regex = "^[a-zA-Z]+$".r
   val sizeName = 40
 
