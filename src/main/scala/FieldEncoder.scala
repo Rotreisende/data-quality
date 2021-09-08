@@ -1,5 +1,3 @@
-package Validators
-
 import java.time.LocalDate
 import scala.util.Try
 

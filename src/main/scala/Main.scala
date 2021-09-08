@@ -2,16 +2,15 @@ import com.github.tototoshi.csv.{CSVReader, CSVWriter}
 
 import scala.annotation.tailrec
 import Headers._
-import Rules._
 import DataType._
 import Instrument._
 
 object Main extends App {
-  val rows = safelyUsage(CSVReader.open(Config.roots.data))(x => materialize(x.iterator, writeIncorrect))
+  val rows = safelyUsage(CSVReader.open(Config.roots.data))(x => materialize(x.iterator, write(Config.roots.incorrect)))
 
   val (correct, incorrect) = correctRowRec(rows)
-  incorrect.map(toStringFromRow).foreach(writeIncorrect)
-  correct.map(toStringFromRow).foreach(writeCorrect)
+  incorrect.map(toStringFromRow).foreach(write(Config.roots.incorrect))
+  correct.map(toStringFromRow).foreach(write(Config.roots.correct))
 
   def isValidField(row: Row): Boolean = {
     headers.forall(field => switchValidator(row, field))
@@ -34,24 +33,12 @@ object Main extends App {
     loop(rows.iterator, List.empty, List.empty)
   }
 
-  def safelyUsage[A <: AutoCloseable, B](resource: A)(usage: A => B): B = {
-    try {
-      usage(resource)
-    } finally {
-      resource.close()
-    }
-  }
-
   def isValidFieldCount(list: Seq[String]): Boolean = {
     list.size == headers.size
   }
 
-  def writeIncorrect(value: String): Unit = {
-    safelyUsage(CSVWriter.open(Config.roots.incorrect, append = true))(_.writeRow(value.split(",")))
-  }
-
-  def writeCorrect(value: String): Unit = {
-    safelyUsage(CSVWriter.open(Config.roots.correct, append = true))(_.writeRow(value.split(",")))
+  def write(root: String)(value: String): Unit = {
+    safelyUsage(CSVWriter.open(root, append = true))(_.writeRow(value.split(",")))
   }
 
   def materialize(iterator: Iterator[Seq[String]], f: String => Unit): List[Row] = {

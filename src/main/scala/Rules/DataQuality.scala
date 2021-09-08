@@ -1,3 +1,5 @@
+package Rules
+
 case class DataQuality[F[_]](rule: F[String] => Boolean, err: String) {
   def validate(value: F[String]): Either[String, F[String]] = {
     Either.cond(rule(value), value, err)
