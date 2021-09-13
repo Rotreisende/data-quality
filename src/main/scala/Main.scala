@@ -12,7 +12,7 @@ object Main extends App {
   incorrect.map(toStringFromRow).foreach(write(Config.roots.incorrect))
   correct.map(toStringFromRow).foreach(write(Config.roots.correct))
 
-  def isValidField(row: Row): Boolean = {
+  def isValidRow(row: Row): Boolean = {
     headers.forall(field => switchValidator(row, field))
   }
 
@@ -21,7 +21,7 @@ object Main extends App {
     def loop(iterator: Iterator[Row], correctList: List[Row], incorrectList: List[Row]): (List[Row], List[Row]) = {
       iterator.nextOption() match {
         case Some(value) =>
-          if (isValidField(value)) {
+          if (isValidRow(value)) {
             loop(iterator, value :: correctList, incorrectList)
           } else {
             loop(iterator, correctList, value :: incorrectList)
